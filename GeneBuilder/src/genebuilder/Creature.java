@@ -68,6 +68,15 @@ public class Creature {
         return code;
     }
     
+    public String GetStringCode(){
+        String code = "";
+        code = code + Genome.get(0).gene.codeString();
+        for(int i = 1; i < Genome.size(); i++){
+            code = code + ',' + Genome.get(i).gene.codeString();
+        }
+        return code;
+    }
+    
     public String GetStats(){
         String retVal = "Creature Stats: INT=" + INT + ", VIT=" + VIT + ", CHA=" + CHA;
         return retVal;

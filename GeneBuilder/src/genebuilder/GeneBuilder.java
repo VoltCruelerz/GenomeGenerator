@@ -12,14 +12,17 @@ import java.util.Random;
 public class GeneBuilder {
     Random r;
     
-    // The number of genes to generate
-    final int geneCount = 12;
-    
     // The number of genes that contribute to an organism
-    final int genomeLength = 3;
+    final int genomeLength = 1000;
+    
+    // The number of options per gene
+    final int allelesPerGene = 2;
+    
+    // The number of genes to generate
+    final int geneCount = genomeLength*allelesPerGene;
     
     // The number of creatures to generate
-    final int populationSize = 40000;
+    final int populationSize = 100;
     
     // Finalized genes for creature generation
     ArrayList<Gene> genes = new ArrayList<>();
@@ -31,8 +34,7 @@ public class GeneBuilder {
     ArrayList<AlleleBundle> geneticMaterial = new ArrayList<>();
     
     // The list of creature that have been generated.
-    ArrayList<Creature> creatures = new ArrayList<>();
-    
+    ArrayList<Creature> creatures = new ArrayList<>();    
     
     public static void main(String[] args){
         GeneBuilder gb = new GeneBuilder(5);
@@ -63,12 +65,15 @@ public class GeneBuilder {
                 bundle.Add(a);
             }
             bundle.PruneAndReplaceWorst(r, genesPerAllele/4);
-            
+
+            boolean isJunk = r.nextBoolean();
             for(int j = 0; j < bundle.Alleles.size(); j++){
                 Allele a = bundle.Alleles.get(j);
                 alleles.add(a);
                 genes.add(a.gene);
-                //echo("Allele[" + i + "][" + j + "]: " + a.gene.INT + ", " + a.gene.VIT + ", " + a.gene.CHA);
+                if(isJunk){
+                    a.gene.setToJunk();
+                }
             }
         }
         
@@ -104,33 +109,47 @@ public class GeneBuilder {
         echo("Average Viability: " + totalViability/creatures.size());
         
         echo("Saving Genomes to File...");
-        ArrayList<String> output = new ArrayList<>();
         
         String trainingData = "TrainingData.txt";
         String testData = "TestData.txt";
         
-        new File(trainingData).delete();
-        new File(testData).delete();
+        int halfCreatures = creatures.size()/2;
+        
+        echo("Erasing Old Data");
+        try{new File(trainingData).delete();}catch(Exception e){echo("Exception e: " + e);}
+        try{new File(testData).delete();}catch(Exception e){echo("Exception e: " + e);}
+        
+        echo("Clearing Progress Data");
+        try{new File(trainingData).delete();}catch(Exception e){echo("Exception e: " + e);}
+        try{new File(testData).delete();}catch(Exception e){echo("Exception e: " + e);}
         
         echo("Build Training Data");
-        int halfCreatures = creatures.size()/2;
-        Save(trainingData, halfCreatures + ", 4, INT, VIT, CHA, CODE");
+        ArrayList<String> trainingOutput = new ArrayList<>();
+        trainingOutput.add(halfCreatures + ", 4, INT, VIT, CHA, CODE");
         for(int i = 0; i < halfCreatures; i++){
             Creature cur = creatures.get(i);
-            String line = cur.SummaryType() + "," + cur.GetNumCode();
-            output.add(line);
+            String line = cur.INT + "," + cur.VIT + "," + cur.CHA + "," + cur.GetStringCode();
+            trainingOutput.add(line);
         }
-        Save(trainingData, output);
+        Thread t1 = new Thread(new Saver(trainingData, trainingOutput));
+        t1.start();
         
         echo("Build Test Data");
-        output.clear();
-        Save(testData, halfCreatures + ", 4, INT, VIT, CHA, CODE");
+        ArrayList<String> testOutput = new ArrayList<>();
+        Saver.Save(testData, halfCreatures + ", 4, INT, VIT, CHA, CODE");
         for(int i = halfCreatures; i < creatures.size(); i++){
             Creature cur = creatures.get(i);
-            String line = cur.SummaryType() + "," + cur.GetNumCode();
-            output.add(line);
+            String line = cur.INT + "," + cur.VIT + "," + cur.CHA + "," + cur.GetStringCode();
+            testOutput.add(line);
         }
-        Save(testData, output);
+        Saver.SpeedWrite(testData, testOutput);
+        
+        try{
+            t1.join();
+        }
+        catch(Exception e){
+            echo("Error: " + e);
+        }
     }
     
     public static void echo(int i){
@@ -139,52 +158,5 @@ public class GeneBuilder {
     
     public static void echo(String s){
         System.out.println(s);
-    }
-        
-    public static void Save(String filename, int val){
-        Save(filename, "" + val);
-    }
-    
-    public static void Save(String filename, double val){
-        Save(filename, "" + val);
-    }
-    
-    public static void Save(String filename, ArrayList<String> list){
-        for(String entry : list){
-            Save(filename, entry);
-        }
-    }
-    
-    public static void Save(String filename, String[] list){
-        Save(filename, "" + list.length);
-        for(String entry : list){
-            Save(filename, entry);
-        }
-    }
-    
-    public static void Save(String filename, int[] list){
-        Save(filename, "" + list.length);
-        for(int entry : list){
-            Save(filename, entry);
-        }
-    }
-    
-    public static void Save(String filename, boolean val){
-        Save(filename, val ? 1 : 0);
-    }
-    
-    // The final, base Save a string function that everything else is an overload of
-    public static void Save(String filename, String outputLine){
-        String localPath = filename;
-        try(FileWriter fw = new FileWriter(localPath, true);
-            BufferedWriter bw = new BufferedWriter(fw);
-            PrintWriter out = new PrintWriter(bw))
-        {
-            out.println(outputLine);
-            //System.out.println(outputLine);
-        } catch (IOException e) {
-            System.err.println("Failed to print to " + filename + " the following: \n" + outputLine);
-            System.err.println("Error: " + e.toString());
-        }
     }
 }

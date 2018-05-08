@@ -24,27 +24,23 @@ public class Gene {
         this.id = id;
         
         // Code length will be [1-5] characters
-        int codeLeng = r.nextInt(maxCodeLeng)+1;
+        int codeLeng = 4;//r.nextInt(maxCodeLeng)+1;
         for(int i = 0; i < codeLeng; i++){
             code = code + GetRandomGeneticCharacter(r);
         }
         
-        // Most genes don't actually do anything, so simulate that
-        isJunk = false;//r.nextBoolean();
-        if(!isJunk){
-            int statType = r.nextInt(3);
-            if(statType == 0){
-                INT = GetCenteredStat(r);
-            }
-            else if(statType == 1){
-                VIT = GetCenteredStat(r);
-            }
-            else if(statType == 2){
-                CHA = GetCenteredStat(r);
-            }
-            else{
-                System.out.println("Bad Stat Type: " + statType);
-            }
+        int statType = r.nextInt(8);
+        if(statType == 0){
+            INT = GetCenteredStat(r);
+        }
+        else if(statType == 1){
+            VIT = GetCenteredStat(r);
+        }
+        else if(statType == 2){
+            CHA = GetCenteredStat(r);
+        }
+        else{
+            // Simulate junk DNA
         }
     }
     
@@ -92,5 +88,24 @@ public class Gene {
             place *= 10;
         }
         return totalNum;
+    }
+    
+    public String codeString(){
+        String codeString = "";
+        for(int i = 0; i < code.length(); i++){
+            char geneticLetter = code.charAt(i);
+            if(codeString.equals("")){
+                codeString = "" + geneticAlphabet.indexOf(geneticLetter);
+            }else{
+                codeString = codeString + "," + geneticAlphabet.indexOf(geneticLetter);
+            }
+        }
+        return codeString;
+    }
+    
+    public void setToJunk(){
+        INT = 0;
+        VIT = 0;
+        CHA = 0;
     }
 }
