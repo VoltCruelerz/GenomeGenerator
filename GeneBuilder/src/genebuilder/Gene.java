@@ -1,5 +1,6 @@
 package genebuilder;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 // This is just raw genetic data.  It does not recognize anything outside itself and does not handle dependencies.
@@ -20,6 +21,12 @@ public class Gene {
     
     public int CHA = 0;
     
+    public boolean isActivator = false;
+    public boolean isInhibitor = false;
+    public float influence = 0;
+    public Gene targetGene = null;
+    ArrayList<Gene> affectors = new ArrayList<>();
+    
     public Gene(int id, Random r) {
         this.id = id;
         
@@ -29,7 +36,7 @@ public class Gene {
             code = code + GetRandomGeneticCharacter(r);
         }
         
-        int statType = r.nextInt(8);
+        int statType = r.nextInt(5);
         if(statType == 0){
             INT = GetCenteredStat(r);
         }
@@ -39,8 +46,13 @@ public class Gene {
         else if(statType == 2){
             CHA = GetCenteredStat(r);
         }
-        else{
-            // Simulate junk DNA
+        else if(statType == 3){
+            isActivator = true;
+            influence = r.nextFloat() + 1;
+        }
+        else if(statType == 4){
+            isInhibitor = true;
+            influence = r.nextFloat();
         }
     }
     
@@ -107,5 +119,15 @@ public class Gene {
         INT = 0;
         VIT = 0;
         CHA = 0;
+        isActivator = false;
+        isInhibitor = false;
+    }
+    
+    public static void echo(int i){
+        echo("" + i);
+    }
+    
+    public static void echo(String s){
+        System.out.println(s);
     }
 }

@@ -47,6 +47,7 @@ features, label = tfe.Iterator(train_dataset).next()
 print("example features:", features[0])
 print("example label:", label[0])
 
+print("Generating Network...")
 neuralNetwork = tf.keras.Sequential([
   tf.keras.layers.Dense(basePairs, activation="relu", input_shape=(basePairs,)),  # input shape required
   tf.keras.layers.Dense(basePairs*3, activation="relu"),
@@ -71,8 +72,8 @@ optimizer = tf.train.GradientDescentOptimizer(learning_rate=alpha)
 
 # keep results for plotting
 train_loss_results = []
-firstLoss = "nan"
 
+print("=====================TRAIN========================")
 for epoch in range(numEpochs):
 	epoch_loss_avg = tfe.metrics.Mean()
 	epoch_accu_avg = tfe.metrics.Mean()

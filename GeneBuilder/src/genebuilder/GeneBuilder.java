@@ -22,10 +22,13 @@ public class GeneBuilder {
     final int geneCount = genomeLength*allelesPerGene;
     
     // The number of creatures to generate
-    final int populationSize = 100;
+    final int populationSize = 20000;
     
     // Finalized genes for creature generation
     ArrayList<Gene> genes = new ArrayList<>();
+    ArrayList<Gene> activators = new ArrayList<>();
+    ArrayList<Gene> inhibitors = new ArrayList<>();
+    ArrayList<Gene> targets = new ArrayList<>();
     
     // The total list of alleles in existence
     ArrayList<Allele> alleles = new ArrayList<>();
@@ -50,7 +53,7 @@ public class GeneBuilder {
         for(int i = 0; i < geneCount; i++){
             Gene g = new Gene(i, r);
             starterGenes.add(g);
-            echo(g.toString());
+            //echo(g.toString());
         }
         
         
@@ -74,39 +77,59 @@ public class GeneBuilder {
                 if(isJunk){
                     a.gene.setToJunk();
                 }
+                else if(a.gene.isActivator){
+                    activators.add(a.gene);
+                }
+                else if(a.gene.isInhibitor){
+                    inhibitors.add(a.gene);
+                }
+                else{
+                    targets.add(a.gene);
+                }
             }
         }
         
-        
-        // echo("Building Allele Dependencies...");
-        // TODO build allele dependencies
+        echo("Building Allele Dependencies...");
+        for(int i = 0; i < activators.size(); i++){
+            Gene activator = activators.get(i);
+            int targetIndex = r.nextInt(targets.size());
+            Gene target = targets.get(targetIndex);
+            activator.targetGene = target;
+            target.affectors.add(activator);
+        }
+        for(int i = 0; i < inhibitors.size(); i++){
+            Gene inhibitor = inhibitors.get(i);
+            int targetIndex = r.nextInt(targets.size());
+            Gene target = targets.get(targetIndex);
+            inhibitor.targetGene = target;
+            target.affectors.add(inhibitor);
+        }
         
         echo("Building Creatures...");
-        long totalViability = 0;
         for(int i = 0; i < populationSize; i++){
-            int viability = 0;
-            int attempts = 0;
-            Creature c = null;
-            while(viability < Creature.ViabilityThreshold && attempts++ < 10){
-                c = new Creature();
-                
-                // Select genes from bundles
-                for(int j = 0; j < genomeLength; j++){
-                    Allele a = alleles.get(j*genesPerAllele + r.nextInt(genesPerAllele));
-                    c.Genome.add(a);
-                    c.INT+=a.gene.INT;
-                    c.VIT+=a.gene.VIT;
-                    c.CHA+=a.gene.CHA;
-                }
-                //echo(c.GetStats());
-                viability = c.GetOptimum();
+            Creature c = new Creature();
+            // Select genes from bundles
+            for(int j = 0; j < genomeLength; j++){
+                Allele a = alleles.get(j*genesPerAllele + r.nextInt(genesPerAllele));
+                c.Genome.add(a);
             }
-            totalViability += viability;
+            
+            for(int j = 0; j < c.Genome.size(); j++){
+                Gene g = c.Genome.get(j).gene;
+                float multiplier = 1;
+                for(int k = 0; k < g.affectors.size(); k++){
+                    float influence = g.affectors.get(k).influence;
+                    multiplier = multiplier * influence;
+                    //echo("Multiplier: " + multiplier + " after Influence: " + influence);
+                }
+                
+                c.INT+=g.INT*multiplier;
+                c.VIT+=g.VIT*multiplier;
+                c.CHA+=g.CHA*multiplier;
+            }
             creatures.add(c);
-            //echo("Creature[" + i + "] Viability: " + viability);
             //echo(c.toString());
         }
-        echo("Average Viability: " + totalViability/creatures.size());
         
         echo("Saving Genomes to File...");
         
