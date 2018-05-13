@@ -142,8 +142,8 @@ public class GeneBuilder {
         
         echo("Saving Genomes to File...");
         
-        String trainingData = "TrainingData.txt";
-        String testData = "TestData.txt";
+        String trainingData = "TrainingData.csv";
+        String testData = "TestData.csv";
         
         int halfCreatures = creatures.size()/2;
         
