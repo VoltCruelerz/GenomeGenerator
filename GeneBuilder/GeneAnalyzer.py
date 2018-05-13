@@ -18,7 +18,7 @@ train_dataset_fp = "D:\Dropbox\Public\GenomeOptimizer\GeneBuilder\TrainingData.t
 print("Local copy of the dataset file: {}".format(train_dataset_fp))
 
 stringsPerCode = 4
-genomeLength = 1000
+genomeLength = 200
 basePairs = stringsPerCode * genomeLength
 statCount = 3
 batchSize = 10
@@ -91,8 +91,8 @@ for epoch in range(numEpochs):
 		train_loss_results.append(epoch_loss_avg.result())
 	
 	epochLossResult = epoch_loss_avg.result()
-	baselineString = "E:{:03d} Loss: {:.3f} (Per Gene: {:.3f})"
-	print(baselineString.format(epoch, epochLossResult, epochLossResult/genomeLength))
+	baselineString = "E:{:03d} Loss: {:.3f} (Per Trait: {:.3f})"
+	print(baselineString.format(epoch, epochLossResult, math.sqrt(epochLossResult/statCount)))
 
 
 ## Test
@@ -114,4 +114,5 @@ for (inputs, groundTruth) in tfe.Iterator(test_dataset):
 	testLoss += individualLoss
 	tests += 1
 	print("=================================================")
-print("Average Test Set Loss: {:.3f}".format(testLoss/tests))
+averageTestLoss = testLoss/tests
+print("Average Test Set Loss: {:.3f} (Per Trait: {:.3f})".format(averageTestLoss, math.sqrt(averageTestLoss/statCount)))

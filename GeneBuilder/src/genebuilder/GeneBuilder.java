@@ -13,7 +13,7 @@ public class GeneBuilder {
     Random r;
     
     // The number of genes that contribute to an organism
-    final int genomeLength = 1000;
+    final int genomeLength = 200;
     
     // The number of options per gene
     final int allelesPerGene = 2;
@@ -116,7 +116,7 @@ public class GeneBuilder {
             
             for(int j = 0; j < c.Genome.size(); j++){
                 Gene g = c.Genome.get(j).gene;
-                float multiplier = 1;
+                float multiplier = 1;              
                 for(int k = 0; k < g.affectors.size(); k++){
                     float influence = g.affectors.get(k).influence;
                     multiplier = multiplier * influence;
@@ -127,6 +127,15 @@ public class GeneBuilder {
                 c.VIT+=g.VIT*multiplier;
                 c.CHA+=g.CHA*multiplier;
             }
+            // Account for environmental influences on the creature
+            // Doing this here rather than per-item because per gene
+            // would average out on large genomes.
+            String before = "Before: " + c.INT + ", " + c.VIT + ", " + c.CHA + "; ";
+            c.INT *= getGaussian(r, 1, 0.5);
+            c.VIT *= getGaussian(r, 1, 0.5);
+            c.CHA *= getGaussian(r, 1, 0.5);
+            String after = "After: " + c.INT + ", " + c.VIT + ", " + c.CHA + "; ";
+            //echo(before + after);
             creatures.add(c);
             //echo(c.toString());
         }
@@ -148,12 +157,16 @@ public class GeneBuilder {
         
         echo("Build Training Data");
         ArrayList<String> trainingOutput = new ArrayList<>();
-        trainingOutput.add(halfCreatures + ", 4, INT, VIT, CHA, CODE");
+        trainingOutput.add("");
+        double trainingTotal = 0;
         for(int i = 0; i < halfCreatures; i++){
             Creature cur = creatures.get(i);
+            trainingTotal += (cur.INT + cur.VIT + cur.CHA)/3;
             String line = cur.INT + "," + cur.VIT + "," + cur.CHA + "," + cur.GetStringCode();
             trainingOutput.add(line);
         }
+        double trainingTraitAverage = trainingTotal/halfCreatures;
+        trainingOutput.set(0,halfCreatures + ", AVG=" + trainingTraitAverage + ", 4, INT, VIT, CHA, CODE");
         Thread t1 = new Thread(new Saver(trainingData, trainingOutput));
         t1.start();
         
@@ -173,6 +186,21 @@ public class GeneBuilder {
         catch(Exception e){
             echo("Error: " + e);
         }
+        echo("");
+        echo("Writing Complete");
+    }
+    
+    public static double getGaussian(Random r, double center, double width){
+        double total = 0;
+        int iterations = 3;
+        for(int i = 0; i < iterations; i++){
+            total += r.nextDouble()*width - width/2;
+        }
+        total /= iterations;
+        
+        total += center;
+        
+        return total;
     }
     
     public static void echo(int i){
