@@ -7,8 +7,6 @@ import java.util.Random;
 public class Gene {
     public static String geneticAlphabet = "AGCT";
     
-    final int maxCodeLeng = 5;
-    
     public int id;
     
     public boolean isJunk;
@@ -30,9 +28,7 @@ public class Gene {
     public Gene(int id, Random r) {
         this.id = id;
         
-        // Code length will be [1-5] characters
-        int codeLeng = 4;//r.nextInt(maxCodeLeng)+1;
-        for(int i = 0; i < codeLeng; i++){
+        for(int i = 0; i < GeneBuilder.basesPerGene; i++){
             code = code + GetRandomGeneticCharacter(r);
         }
         
@@ -70,8 +66,8 @@ public class Gene {
     
     public String GetPaddedCode(){
         int codeLeng = code.length();
-        if(codeLeng != maxCodeLeng){
-            return padRight(code, maxCodeLeng - codeLeng);
+        if(codeLeng != GeneBuilder.basesPerGene){
+            return padRight(code, GeneBuilder.basesPerGene - codeLeng);
         }
         else{
             return code;

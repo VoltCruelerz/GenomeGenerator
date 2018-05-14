@@ -67,8 +67,8 @@ public class Saver implements Runnable{
             out.println(outputLine);
             //System.out.println(outputLine);
         } catch (IOException e) {
-            System.err.println("Failed to print to " + filename + " the following: \n" + outputLine);
-            System.err.println("Error: " + e.toString());
+            System.out.println("Failed to print to " + filename + " the following: \n" + outputLine);
+            System.out.println("Error: " + e.toString());
         }
     }
     
@@ -78,11 +78,10 @@ public class Saver implements Runnable{
             FileWriter writer = new FileWriter(new File(fileName));
             BufferedWriter bufferedWriter = new BufferedWriter(writer, bufSize);
 
-            System.out.print("Writing buffered (buffer size: " + bufSize + ")... ");
             SpeedWriteLines(records, bufferedWriter);
         }
         catch(Exception e){
-            System.out.println("Error: " + e.toString());
+            System.out.println("\nError on save to " + fileName + ": " + e.toString());
         }
     }
 

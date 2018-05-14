@@ -12,6 +12,12 @@ import java.util.Random;
 public class GeneBuilder {
     Random r;
     
+    // INT, VIT, and CHA
+    final int traitCount = 3;
+    
+    // Set to 3 because 3 base pairs -> 1 amino acid
+    public static final int basesPerGene = 3;
+    
     // The number of genes that contribute to an organism
     final int genomeLength = 200;
     
@@ -20,6 +26,9 @@ public class GeneBuilder {
     
     // The number of genes to generate
     final int geneCount = genomeLength*allelesPerGene;
+    
+    // The number of base pairs in the creature's genome
+    final int basePairCount = genomeLength*basesPerGene;
     
     // The number of creatures to generate
     final int populationSize = 20000;
@@ -140,54 +149,71 @@ public class GeneBuilder {
             //echo(c.toString());
         }
         
-        echo("Saving Genomes to File...");
+        echo("Saving Gene Pools to File...");
         
         String trainingData = "TrainingData.csv";
         String testData = "TestData.csv";
-        
-        int halfCreatures = creatures.size()/2;
         
         echo("Erasing Old Data");
         try{new File(trainingData).delete();}catch(Exception e){echo("Exception e: " + e);}
         try{new File(testData).delete();}catch(Exception e){echo("Exception e: " + e);}
         
-        echo("Clearing Progress Data");
-        try{new File(trainingData).delete();}catch(Exception e){echo("Exception e: " + e);}
-        try{new File(testData).delete();}catch(Exception e){echo("Exception e: " + e);}
-        
+        ArrayList<Thread> children = new ArrayList<>();
+        int halfCreatures = creatures.size()/2;
         echo("Build Training Data");
-        ArrayList<String> trainingOutput = new ArrayList<>();
-        trainingOutput.add("");
-        double trainingTotal = 0;
-        for(int i = 0; i < halfCreatures; i++){
-            Creature cur = creatures.get(i);
-            trainingTotal += (cur.INT + cur.VIT + cur.CHA)/3;
-            String line = cur.INT + "," + cur.VIT + "," + cur.CHA + "," + cur.GetStringCode();
-            trainingOutput.add(line);
-        }
-        double trainingTraitAverage = trainingTotal/halfCreatures;
-        trainingOutput.set(0,halfCreatures + ", AVG=" + trainingTraitAverage + ", 4, INT, VIT, CHA, CODE");
-        Thread t1 = new Thread(new Saver(trainingData, trainingOutput));
-        t1.start();
+        children.add(SaveGenePoolData(trainingData, 0, halfCreatures, true));
         
         echo("Build Test Data");
-        ArrayList<String> testOutput = new ArrayList<>();
-        Saver.Save(testData, halfCreatures + ", 4, INT, VIT, CHA, CODE");
-        for(int i = halfCreatures; i < creatures.size(); i++){
-            Creature cur = creatures.get(i);
-            String line = cur.INT + "," + cur.VIT + "," + cur.CHA + "," + cur.GetStringCode();
-            testOutput.add(line);
-        }
-        Saver.SpeedWrite(testData, testOutput);
+        children.add(SaveGenePoolData(testData, halfCreatures, creatures.size(), true));
         
-        try{
-            t1.join();
+        echo("Waiting for Build Completion");
+        for(int i = 0; i < children.size(); i++){
+            Thread child = children.get(i);
+            if(child != null){
+                try{
+                    child.join();
+                    echo("Thread[" + i + "] Complete");
+                }
+                catch(Exception e){
+                    echo("Thread[" + i + "] Error: " + e);
+                }
+            } else {
+                echo("Thread[" + i + "] Already Complete on Main Thread");
+            }
         }
-        catch(Exception e){
-            echo("Error: " + e);
+        echo("\n===== All Data Files Built =====");
+    }
+    
+    public Thread SaveGenePoolData(String fileName, int start, int stop, boolean spawnThread){
+        echo("Initiate Save to " + fileName);
+        ArrayList<String> genePoolOutput = new ArrayList<>();
+        
+        // Add dummy first line as placeholder
+        genePoolOutput.add("");
+        double genomeTotal = 0;
+        for(int i = start; i < stop; i++){
+            Creature cur = creatures.get(i);
+            genomeTotal += (cur.INT + cur.VIT + cur.CHA)/3;
+            String line = cur.INT + "," + cur.VIT + "," + cur.CHA + "," + cur.GetStringCode();
+            genePoolOutput.add(line);
         }
-        echo("");
-        echo("Writing Complete");
+        double poolTraitAverage = genomeTotal/(stop-start);
+        genePoolOutput.set(0,getDataSummaryLine(poolTraitAverage));
+        
+        // Spawn child thread if requested
+        Thread child = null;
+        if(spawnThread){
+            child = new Thread(new Saver(fileName, genePoolOutput));
+            child.start();
+        } else{
+            new Saver(fileName, genePoolOutput);
+        }
+        
+        return child;
+    }
+    
+    public String getDataSummaryLine(double traitAverage){
+        return "CreatureCount=" + creatures.size()/2 + ",TraitCount=" + traitCount + ",TraitAvg=" + traitAverage + ",BasePairCount=" + basePairCount;
     }
     
     public static double getGaussian(Random r, double center, double width){

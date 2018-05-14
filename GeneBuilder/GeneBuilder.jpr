@@ -73,7 +73,8 @@
          <hash n="Default">
             <value n="custom" v="false"/>
             <value n="name" v="Default"/>
-            <url n="targetURL" path="src/genebuilder/GeneBuilder.java"/>
+            <value n="runActiveFile" v="true"/>
+            <url n="targetURL" path="classes/genebuilder/GeneBuilder.class"/>
          </hash>
       </hash>
    </hash>

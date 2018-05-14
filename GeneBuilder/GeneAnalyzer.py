@@ -13,18 +13,51 @@ tf.enable_eager_execution()
 print("TensorFlow version: {}".format(tf.VERSION))
 print("Eager execution: {}".format(tf.executing_eagerly()))
 
-train_dataset_fp = "D:\Dropbox\Public\GenomeOptimizer\GeneBuilder\TrainingData.txt"
+train_dataset_fp = "TrainingData.csv"
 
 print("Local copy of the dataset file: {}".format(train_dataset_fp))
 
-stringsPerCode = 4
-genomeLength = 200
-basePairs = stringsPerCode * genomeLength
+# Hard-Coded
+basesPerAminoAcid = 3
 statCount = 3
 batchSize = 10
 numEpochs = 200
 alpha = 0.00001
 
+# Automatically Detected
+basePairs = 0
+genomeLength = 0
+numCreatures = 0
+traitAvg = 0
+
+with open(train_dataset_fp) as f:
+	print("Reading Parameters from " + train_dataset_fp)
+	line = f.readline()
+	for item in line.split(','):
+		paramStart = item.find('=') + 1
+		if item.find('CreatureCount') == 0:
+			paramValue = int(item[paramStart:])
+			print("Set CreatureCount to " + str(paramValue))
+			numCreatures = paramValue
+		elif item.find('TraitCount') == 0:
+			paramValue = int(item[paramStart:])
+			print("Set TraitCount to " + str(paramValue))
+			statCount = paramValue
+		elif item.find('TraitAvg') == 0:
+			paramValue = float(item[paramStart:])
+			print("Set TraitAvg to " + str(paramValue))
+			traitAvg = paramValue
+		elif item.find('BasePairCount') == 0:
+			paramValue = int(item[paramStart:])
+			print("Set BasePairCount to " + str(paramValue))
+			basePairs = paramValue
+		else:
+			print("Unrecognized Parameter: " + item)
+	print("Parameter Read Complete")
+genomeLength = basePairs/basesPerAminoAcid
+
+print("Loading Database...")
+train_dataset = tf.data.TextLineDataset(train_dataset_fp)
 genomeReaderList = ([[0.]] * statCount) + ([[0.]] * basePairs)
 print("Genome Reader list: ", genomeReaderList)
 def parse_csv(line):
@@ -35,11 +68,12 @@ def parse_csv(line):
 	labels = tf.reshape(parsed_line[0:statCount], shape=(statCount,))
 	return features, labels
 
-print("Loading Database...")
-train_dataset = tf.data.TextLineDataset(train_dataset_fp)
 train_dataset = train_dataset.skip(1)             # skip the first header row
+print("Mapping Database...")
 train_dataset = train_dataset.map(parse_csv)      # parse each row
+print("Shuffling Database...")
 train_dataset = train_dataset.shuffle(buffer_size=100)  # randomize
+print("Batching Database...")
 train_dataset = train_dataset.batch(batchSize)
 
 # View a single example entry from a batch
@@ -97,7 +131,7 @@ for epoch in range(numEpochs):
 
 ## Test
 print("=====================TEST========================")
-test_fp = "D:\Dropbox\Public\GenomeOptimizer\GeneBuilder\TestData.txt"
+test_fp = "D:\Dropbox\Public\GenomeOptimizer\GeneBuilder\TestData.csv"
 test_dataset = tf.data.TextLineDataset(test_fp)
 test_dataset = test_dataset.skip(1)             # skip header row
 test_dataset = test_dataset.map(parse_csv)      # parse each row with the function created earlier
